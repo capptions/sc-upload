@@ -1,0 +1,474 @@
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE
+The complete set of authors may be found at http://polymer.github.io/AUTHORS
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS
+-->
+<link rel="import" href="../polymer/polymer.html" />
+<link rel="import" href="../sc-thumbnail/sc-thumbnail.html" />
+<script src="../blueimp-load-image/js/load-image.all.min.js"></script>
+<script src="../blueimp-canvas-to-blob/js/canvas-to-blob.min.js"></script>
+<script src="../idbwrapper/idbstore.min.js"></script>
+
+<dom-module id="sc-upload">
+
+  <style>
+    .caption {
+      font-weight: bold;
+      color: var(--default-primary-color); 
+    }
+
+    #uploadarea {
+      cursor: pointer;
+      vertical-align: middle;
+      color: #555;
+      padding: 20px;
+      margin-bottom: 20px;
+      border: 1px dashed var(--light-primary-color);
+    }
+
+    #uploadarea.hover {
+      border: 1px dashed var(--default-primary-color);
+    }
+
+    .file {
+      padding: 10px 0px;
+    }
+
+    .commands {
+      display: inline;
+      margin-right: 5px;
+    }
+
+    .commands iron-icon:not([icon="done"]) {
+      cursor: pointer;
+      opacity: .9;
+    }
+
+    .commands iron-icon:hover {
+      opacity: 1;
+    }
+
+    .error {
+      color: #f40303;
+      font-size: 11px;
+      margin: 2px 0px -3px;
+    }
+
+    paper-progress {
+      width: 100%;
+      --paper-progress-active-color: #03a9f4;
+    }
+
+    paper-progress[error] {
+      --paper-progress-active-color: #f40303;
+    }
+
+    sc-thumbnail /deep/ img {
+      margin-top: 5px;
+    }
+
+  </style>
+
+  <template>
+    <div>
+
+      <div id="uploadarea" on-tap="click">
+        <span class="caption" hidden="[[readonly]]">[[caption()]]</span>
+        <template is="dom-repeat" items="[[uploaders]]">
+          <div class="file">
+            <div on-tap="clickItem">
+              <div class="commands">
+                <iron-icon icon="autorenew" title="Retry Upload" on-click="retry" hidden$="[[!item.error]]"></iron-icon>
+                <iron-icon icon="cancel" title="Remove" on-click="removeUploader" hidden="[[readonly]]"></iron-icon>
+              </div>
+              <span class="name">[[item.file.name]]</span>
+              <br>
+              <sc-thumbnail></sc-thumbnail>
+            </div>
+            <div class="error" hidden$="[[!item.error]]">Error uploading file...</div>
+            <paper-progress value$="[[item.progress]]" error$="[[item.error]]"></paper-progress>
+          </div>
+        </template>
+        <template is="dom-repeat" items="[[files_]]">
+          <div class="file">
+            <div on-tap="clickItem">
+              <div class="commands">
+                <iron-icon icon="cancel" title="Remove" on-click="removeFile" hidden="[[readonly]]"></iron-icon>
+                <iron-icon icon="check-circle" title="Success"></iron-icon>
+              </div>
+              <span class="name">[[item.name]]</span>
+              <br>
+              <sc-thumbnail url="[[item.thumbnail_url]]" original-url="[[item.url]]"></sc-thumbnail>
+            </div>
+            <paper-progress value="100"></paper-progress>
+          </div>
+        </template>
+      </div>
+    </div>
+    <form hidden id="form">
+      <input type="file" id="file" on-change="add" multiple="[[multi]]">
+    </form>
+  </template>
+
+</dom-module>
+
+<script>
+(function () {
+
+  window.Polymer({
+    is: 'sc-upload',
+    behaviors: [window.DefaultBehavior],
+
+    properties: {
+
+      readonly: {
+        type: Boolean,
+        value: false
+      },
+
+      multi: {
+        type: Boolean,
+        value: true
+      },
+
+      uploaders: {
+        type: Array,
+        value: function () { return []; }
+      },
+
+      files: {
+        type: Array,
+        value: function () { return []; },
+        notify: true
+      },
+
+      files_: {
+        type: Array,
+        value: function () { return []; },
+        readonly: true
+      },
+
+      urls: {
+        type: Object,
+        value: function () { return {}; }
+      },
+
+      imageDimensions: {
+        type: Object,
+        value: {
+          maxWidth: 1050,
+          maxHeight: 874,
+          minWidth: 140,
+          minHeight: 80
+        }
+      }
+
+    },
+
+    listeners: {
+      'before-upload': 'beforeUpload'
+    },
+
+    uploadProfile: function (file, callback) {
+      // This method should be extended
+      // document.createElement('sc-upload').__proto__.uploadProfile = function (file, fn) { ... }
+      callback(undefined, {
+        upload_url: 'http://upload.com/'.concat(file.name, '/put'),
+        upload_method: 'PUT',
+        url: 'http://upload.com/'.concat(file.name, '/get'),
+        thumbnail_url: 'http://upload.com/'.concat(file.name, '/thumbnail')
+      });
+    },
+
+    observers: [
+      'filesChanged(files.splices)',
+      'reset(files)'
+    ],
+
+    filesChanged: function () {
+      this.files_ = this.files.map(function (file, i) {
+        var f = {
+          name: file.name,
+          url: file.url,
+          thumbnail_url: file.thumbnail_url
+        };
+
+        if (file.idb) {
+          this.urlFromIDB(file.idb, function (url) {
+            this.set('files_.'.concat(i, '.url'), url);
+            this.set('files_.'.concat(i, '.thumbnail_url'), url);
+          }.bind(this));
+        }
+
+        return f;
+      }, this);
+    },
+
+    reset: function () {
+      this.set('uploaders', []);
+      this.filesChanged();
+    },
+
+    caption: function () {
+      if (/mobile/i.test(window.navigator.userAgent)) {
+        return 'Tap here to add attachments';
+      }
+      return 'Click or drag here to add attachments';
+    },
+
+    updateUploader: function (uploader, data, ifNew) {
+      var prefix = 'uploaders.' + this.uploaders.indexOf(uploader);
+      for (var key in data) {
+        if (!ifNew || typeof uploader[key] === 'undefined') {
+          this.set(prefix.concat('.', key), data[key]);
+        }
+      }
+    },
+
+    ondragover: function (e) {
+      if (this.readonly) {
+        return;
+      }
+
+      e.stopPropagation();
+      this.toggleClass('hover', true, this.$.uploadarea);
+      return false;
+    },
+
+    ondragleave: function () {
+      if (this.readonly) {
+        return;
+      }
+
+      this.toggleClass('hover', false, this.$.uploadarea);
+      return false;
+    },
+
+    ondrop: function (e) {
+      if (this.readonly) {
+        return;
+      }
+
+      this.toggleClass('hover', false, this.$.uploadarea);
+      e.preventDefault();
+      var length = e.dataTransfer.files.length;
+      for (var i = 0; i < length; i++) {
+        this.addFile(e.dataTransfer.files[i]);
+      }
+    },
+
+    click: function () {
+      if (this.readonly) {
+        return;
+      }
+
+      this.$.form.reset();
+
+      var e = document.createEvent('MouseEvents');
+      e.initEvent('click', true, false);
+      this.$.file.dispatchEvent(e);
+    },
+
+    clickItem: function (e) {
+      e.cancelBubble = true;
+    },
+
+    add: function (e) {
+      Array.prototype.slice.call(e.target.files).forEach(this.addFile.bind(this));
+    },
+
+    removeUploader: function (e) {
+      e.cancelBubble = true;
+      var uploader = e.model.__data__.item;
+      this.splice('uploaders', this.uploaders.indexOf(uploader));
+      return uploader && uploader.xhr && uploader.xhr.abort();
+    },
+
+    removeFile: function (e) {
+      e.cancelBubble = true;
+      this.splice('files', this.files.indexOf(e.model.__data__.item));
+    },
+
+    resizeImage: function (file, fn) {
+      window.loadImage(file, function (canvas) {
+        if (canvas.type === 'error') {
+          window.alert('Sorry, this image can not be uploadered!');
+          return fn();
+        }
+        canvas.toBlob(function (blob) {
+          blob.name = file.name;
+          blob.resized = true;
+          fn(blob);
+        }.bind(this), 'image/jpeg');
+      }, {
+        maxWidth: this.imageDimensions.maxWidth,
+        maxHeight: this.imageDimensions.maxHeight,
+        minWidth: this.imageDimensions.minWidth,
+        minHeight: this.imageDimensions.minHeight,
+        crossOrigin: true,
+        canvas: true
+      });
+    },
+
+    getStore: function (fn) {
+      fn = fn.bind(this);
+      return new window.IDBStore({}, function () {
+        fn(this);
+      });
+    },
+
+    retry: function (e) {
+      var uploader = e.model.__data__.item;
+
+      this.updateUploader(uploader, {
+        error: false,
+        complete: false,
+        progress: 0
+      });
+
+      this.async(this.upload.bind(this, uploader), 50);
+    },
+
+    error: function (uploader, status) {
+      if (uploader.callback) {
+        uploader.callback();
+      }
+
+      if (status === 0) {
+        return this.store(uploader);
+      }
+
+      this.updateUploader(uploader, {
+        error: true,
+        complete: true,
+        progress: 100
+      });
+    },
+
+    urlFromIDB: function (idb, fn) {
+      this.getStore(function (store) {
+        store.get(idb, function (file) {
+          fn(file.data);
+        });
+      });
+    },
+
+    store: function (uploader) {
+      this.getStore(function (store) {
+        var reader = new window.FileReader();
+        reader.addEventListener('loadend', function () {
+          store.put({
+            name: uploader.file.name,
+            data: reader.result
+          }, function (id) {
+            this.unshift('files', {
+              idb: id,
+              name: uploader.file.name,
+              type: uploader.file.type
+            });
+
+            this.splice('uploaders', this.uploaders.indexOf(uploader), 1);
+          }.bind(this));
+        }.bind(this));
+        reader.readAsDataURL(uploader.file);
+      });
+    },
+
+    restore: function (file, callback) {
+      if (!file || !file.idb) {
+        return callback();
+      }
+
+      this.getStore(function (store) {
+        store.get(file.idb, function (file) {
+          var f = window.dataURLtoBlob(file.data);
+          f.name = file.name;
+          this.addUploader(f, callback);
+        }.bind(this));
+      });
+    },
+
+    addFile: function (file) {
+      if (!file) {
+        return;
+      }
+
+      if (/image/i.test(file.type) && !file.resized) {
+        return this.resizeImage(file, this.addFile.bind(this));
+      }
+
+      this.addUploader(file);
+    },
+
+    addUploader: function (file, callback) {
+      var uploader = {
+        error: false,
+        complete: false,
+        progress: 0,
+        file: file,
+        callback: callback
+      };
+
+      this.push('uploaders', uploader);
+
+      this.uploadProfile(file, function (err, profile) {
+        if (typeof err !== 'undefined') {
+          return this.error(uploader, err);
+        }
+
+        uploader.profile = profile;
+        this.upload(uploader);
+      }.bind(this));
+    },
+
+    upload: function (uploader) {
+      if (!uploader) {
+        return;
+      }
+
+      var xhr = uploader.xhr = new window.XMLHttpRequest();
+
+      xhr.upload.addEventListener('progress', function (e) {
+        var done = e.loaded, total = e.total;
+        this.updateUploader(uploader, {
+          progress: Math.round((done / total) * 100)
+        });
+      }.bind(this));
+
+      xhr.addEventListener('load', function () {
+        if (xhr.status === 200) {
+          var file = {
+            url: uploader.profile.url,
+            thumbnail_url: uploader.profile.thumbnail_url,
+            name: uploader.file.name,
+            type: uploader.file.type
+          };
+
+          this.splice('uploaders', this.uploaders.indexOf(uploader), 1);
+          this.unshift('files', file);
+
+          if (uploader.callback) {
+            uploader.callback(file);
+          }
+        }
+        else {
+          this.error(uploader, xhr.status);
+        }
+      }.bind(this));
+
+      xhr.addEventListener('error', function () {
+        this.error(uploader, xhr.status);
+      }.bind(this));
+
+      xhr.open(uploader.profile.upload_method, uploader.profile.upload_url, true);
+      xhr.setRequestHeader('Content-type', uploader.file.type);
+      xhr.send(uploader.file);
+    }
+
+  });
+})();
+</script>

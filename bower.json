@@ -1,0 +1,36 @@
+{
+  "name": "sc-upload",
+  "version": "1.0.0",
+  "description": "Polymer 1.0 element for beautiful file uploads",
+  "authors": [
+    "Safety Changer"
+  ],
+  "keywords": [
+    "web-components",
+    "web-component",
+    "polymer",
+    "upload",
+    "file",
+    "rotate",
+    "scale",
+    "resize",
+    "loader",
+    "progress"
+  ],
+  "main": "sc-upload.html",
+  "ignore": {},
+  "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/safetychanger/sc-upload"
+  },
+  "license": "http://polymer.github.io/LICENSE.txt",
+  "homepage": "https://github.com/safetychanger/sc-upload",
+  "dependencies": {
+    "polymer": "~1.0.6",
+    "sc-thumbnail": "latest",
+    "blueimp-load-image": "1.13.1",
+    "blueimp-canvas-to-blob": "2.2.0",
+    "idbwrapper": "git@github.com:safetychanger/IDBWrapper.git#master"
+  }
+}
