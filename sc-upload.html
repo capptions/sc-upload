@@ -9,8 +9,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 <link rel="import" href="../polymer/polymer.html" />
 <link rel="import" href="../sc-thumbnail/sc-thumbnail.html" />
-<script src="../blueimp-load-image/js/load-image.all.min.js"></script>
-<script src="../blueimp-canvas-to-blob/js/canvas-to-blob.min.js"></script>
+<link rel="import" href="../sc-resize/sc-resize.html" />
 <script src="../idbwrapper/idbstore.min.js"></script>
 
 <dom-module id="sc-upload">
@@ -18,7 +17,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <style>
     .caption {
       font-weight: bold;
-      color: var(--default-primary-color); 
+      color: var(--default-primary-color);
     }
 
     #uploadarea {
@@ -74,10 +73,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   </style>
 
   <template>
-    <div>
 
+    <div>
       <div id="uploadarea" on-tap="click">
+
         <span class="caption" hidden="[[readonly]]">[[caption()]]</span>
+
         <template is="dom-repeat" items="[[uploaders]]">
           <div class="file">
             <div on-tap="clickItem">
@@ -93,6 +94,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             <paper-progress value$="[[item.progress]]" error$="[[item.error]]"></paper-progress>
           </div>
         </template>
+
         <template is="dom-repeat" items="[[files_]]">
           <div class="file">
             <div on-tap="clickItem">
@@ -107,11 +109,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             <paper-progress value="100"></paper-progress>
           </div>
         </template>
+
       </div>
     </div>
+
     <form hidden id="form">
       <input type="file" id="file" on-change="add" multiple="[[multi]]">
     </form>
+
+    <sc-resize id="resize"></sc-resize>
+
   </template>
 
 </dom-module>
@@ -121,7 +128,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
   window.Polymer({
     is: 'sc-upload',
-    behaviors: [window.DefaultBehavior],
 
     properties: {
 
@@ -169,10 +175,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     },
 
-    listeners: {
-      'before-upload': 'beforeUpload'
-    },
-
     uploadProfile: function (file, callback) {
       // This method should be extended
       // document.createElement('sc-upload').__proto__.uploadProfile = function (file, fn) { ... }
@@ -190,6 +192,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     ],
 
     filesChanged: function () {
+      if (!this.files) {
+        return;
+      }
+
       this.files_ = this.files.map(function (file, i) {
         var f = {
           name: file.name,
@@ -294,23 +300,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     },
 
     resizeImage: function (file, fn) {
-      window.loadImage(file, function (canvas) {
-        if (canvas.type === 'error') {
-          window.alert('Sorry, this image can not be uploadered!');
-          return fn();
-        }
-        canvas.toBlob(function (blob) {
-          blob.name = file.name;
-          blob.resized = true;
-          fn(blob);
-        }.bind(this), 'image/jpeg');
-      }, {
-        maxWidth: this.imageDimensions.maxWidth,
-        maxHeight: this.imageDimensions.maxHeight,
-        minWidth: this.imageDimensions.minWidth,
-        minHeight: this.imageDimensions.minHeight,
-        crossOrigin: true,
-        canvas: true
+      this.$.resize.resize(file, function (blob) {
+        blob.resized = true;
+        return fn(blob);
       });
     },
 

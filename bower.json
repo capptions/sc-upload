@@ -29,8 +29,7 @@
   "dependencies": {
     "polymer": "~1.0.6",
     "sc-thumbnail": "latest",
-    "blueimp-load-image": "1.13.1",
-    "blueimp-canvas-to-blob": "2.2.0",
+    "sc-resize": "latest",
     "idbwrapper": "git@github.com:safetychanger/IDBWrapper.git#master"
   }
 }
