@@ -191,6 +191,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       'reset(files)'
     ],
 
+    listeners: {
+      'uploadarea.dragover': 'dragOver',
+      'uploadarea.dragleave': 'dragLeave',
+      'uploadarea.drop': 'drop'
+    },
+
     filesChanged: function () {
       if (!this.files) {
         return;
@@ -235,17 +241,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     },
 
-    ondragover: function (e) {
+    dragOver: function (e) {
       if (this.readonly) {
         return;
       }
 
-      e.stopPropagation();
       this.toggleClass('hover', true, this.$.uploadarea);
       return false;
     },
 
-    ondragleave: function () {
+    dragLeave: function () {
       if (this.readonly) {
         return;
       }
@@ -254,13 +259,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       return false;
     },
 
-    ondrop: function (e) {
+    drop: function (e) {
       if (this.readonly) {
         return;
       }
 
-      this.toggleClass('hover', false, this.$.uploadarea);
       e.preventDefault();
+
+      this.toggleClass('hover', false, this.$.uploadarea);
+
       var length = e.dataTransfer.files.length;
       for (var i = 0; i < length; i++) {
         this.addFile(e.dataTransfer.files[i]);
