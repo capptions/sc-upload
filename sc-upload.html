@@ -113,7 +113,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     </div>
 
     <form hidden id="form">
-      <input type="file" id="file" on-change="add" multiple="[[multi]]">
+      <input type="file" id="file" on-change="add" multiple="[[multi]]" accept="[[accept]]" capture="camera">
     </form>
 
     <sc-resize id="resize"></sc-resize>
@@ -160,6 +160,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       urls: {
         type: Object,
         value: function () { return {}; }
+      },
+
+      accept: {
+        type: String,
+        value: 'image/*|video/*'
       },
 
       imageDimensions: {
