@@ -113,7 +113,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     </div>
 
     <form hidden id="form">
-      <input type="file" id="file" on-change="add" multiple="[[multi]]" accept="[[accept]]" capture="camera">
+      <input type="file" id="file" on-change="add" multiple="[[multi]]" accept="[[accept]]" capture="[[capture]]">
     </form>
 
     <sc-resize id="resize"></sc-resize>
@@ -133,11 +133,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       readonly: {
         type: Boolean,
         value: false
-      },
-
-      multi: {
-        type: Boolean,
-        value: true
       },
 
       uploaders: {
@@ -162,9 +157,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         value: function () { return {}; }
       },
 
+      multi: {
+        type: Boolean,
+        value: false
+      },
+
       accept: {
         type: String,
         value: 'image/*|video/*'
+      },
+
+      capture: {
+        type: String,
+        value: 'camera'
       },
 
       imageDimensions: {
