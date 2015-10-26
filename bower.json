@@ -1,4 +1,4 @@
-{
+  {
   "name": "sc-upload",
   "version": "1.0.2",
   "description": "Polymer 1.0 element for beautiful file uploads",
@@ -30,6 +30,7 @@
     "polymer": "~1.0.6",
     "sc-thumbnail": "latest",
     "sc-resize": "latest",
+    "IndexedDBShim": "latest",
     "idbwrapper": "git@github.com:safetychanger/IDBWrapper.git#master"
   }
 }
