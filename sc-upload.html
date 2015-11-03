@@ -473,7 +473,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }.bind(this));
 
       xhr.open(uploader.profile.upload_method, uploader.profile.upload_url, true);
-      xhr.setRequestHeader('Content-type', uploader.file.type);
+      xhr.setRequestHeader('Content-type', uploader.profile.type || uploader.file.type);
       xhr.send(uploader.file);
     }
 
