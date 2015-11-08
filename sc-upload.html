@@ -324,7 +324,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     getStore: function (fn) {
       fn = fn.bind(this);
-      return new window.IDBStore({}, function () {
+      return new window.IDBStore({
+        implementationPreference: ['shimIndexedDB']
+      }, function () {
         fn(this);
       });
     },
