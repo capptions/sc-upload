@@ -77,7 +77,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <div>
       <div id="uploadarea" on-tap="click">
 
-        <span class="caption" hidden="[[readonly]]">[[caption()]]</span>
+        <span class="caption" hidden="[[readonly]]">[[caption]]</span>
 
         <template is="dom-repeat" items="[[uploaders]]">
           <div class="file">
@@ -129,6 +129,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     is: 'sc-upload',
 
     properties: {
+
+      caption: {
+        type: String,
+        value: function () {
+          if (/mobile/i.test(window.navigator.userAgent)) {
+            return 'Tap here to add attachments';
+          }
+          return 'Click or drag here to add attachments';
+        }
+      },
 
       readonly: {
         type: Boolean,
@@ -232,13 +242,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     reset: function () {
       this.set('uploaders', []);
       this.filesChanged();
-    },
-
-    caption: function () {
-      if (/mobile/i.test(window.navigator.userAgent)) {
-        return 'Tap here to add attachments';
-      }
-      return 'Click or drag here to add attachments';
     },
 
     updateUploader: function (uploader, data, ifNew) {
