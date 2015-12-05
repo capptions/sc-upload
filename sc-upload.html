@@ -368,7 +368,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         uploader.callback();
       }
 
-      if (status === 0) {
+      if (status === 0 && uploader.progress === 0) {
         return this.store(uploader);
       }
 
