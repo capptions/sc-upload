@@ -88,9 +88,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               </div>
               <span class="name">[[item.file.name]]</span>
               <br>
+              <div class="error" hidden$="[[!item.error]]">Error uploading file...</div>
               <sc-thumbnail status="[[status(item.error)]]"></sc-thumbnail>
             </div>
-            <div class="error" hidden$="[[!item.error]]">Error uploading file...</div>
             <paper-progress value$="[[item.progress]]" error$="[[item.error]]"></paper-progress>
           </div>
         </template>
