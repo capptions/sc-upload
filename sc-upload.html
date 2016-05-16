@@ -326,13 +326,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     removeUploader: function (e) {
       e.cancelBubble = true;
       var uploader = e.model.__data__.item;
-      this.splice('uploaders', this.uploaders.indexOf(uploader));
+      this.splice('uploaders', this.uploaders.indexOf(uploader), 1);
       return uploader && uploader.xhr && uploader.xhr.abort();
     },
 
     removeFile: function (e) {
       e.cancelBubble = true;
-      this.splice('files', this.files.indexOf(e.model.__data__.item));
+      this.splice('files', this.files_.indexOf(e.model.__data__.item), 1);
     },
 
     resizeImage: function (file, fn) {
